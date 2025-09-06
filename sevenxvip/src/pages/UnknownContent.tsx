@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+// UnknownContent.tsx
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { HelpCircle, Filter, Eye } from "lucide-react";
+import { HelpCircle, Eye } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useRegion } from "../contexts/RegionContext";
 import { motion } from "framer-motion";
@@ -56,32 +57,27 @@ const UnknownContent: React.FC = () => {
       const params = new URLSearchParams({
         page: page.toString(),
         sortBy: "postDate",
-        sortOrder: "DESC",
+        sortOrder: sortOption === "oldest" ? "ASC" : "DESC",
         limit: "24",
-        contentType: "unknown"
+        contentType: "unknown",
       });
 
       if (searchName) params.append("search", searchName);
       if (selectedMonth) params.append("month", selectedMonth);
-      if (sortOption !== "mostRecent") params.append("dateFilter", sortOption);
+      if (region) params.append("region", region); // inclusão do filtro de região
 
       const response = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/universal-search/search?${params}`,
         {
-          headers: {
-            "x-api-key": `${import.meta.env.VITE_FRONTEND_API_KEY}`,
-          },
+          headers: { "x-api-key": `${import.meta.env.VITE_FRONTEND_API_KEY}` },
         }
       );
 
-      if (!response.data?.data) {
-        throw new Error("Invalid server response");
-      }
+      if (!response.data?.data) throw new Error("Invalid server response");
 
       const decoded = decodeModifiedBase64<{ data: LinkItem[]; totalPages: number }>(
         response.data.data
       );
-
       const { data: rawData, totalPages } = decoded;
 
       if (isLoadMore) {
@@ -108,8 +104,8 @@ const UnknownContent: React.FC = () => {
       setCurrentPage(1);
       fetchContent(1);
     }, 300);
-
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchName, selectedMonth, sortOption, region]);
 
   const handleLoadMore = () => {
@@ -120,7 +116,18 @@ const UnknownContent: React.FC = () => {
     fetchContent(nextPage, true);
   };
 
-  const recentLinks = filteredLinks.slice(0, 5);
+  // ordenação centralizada e única
+  const sortedAll = useMemo(() => {
+    const arr = [...filteredLinks];
+    return arr.sort((a, b) => {
+      const da = new Date(a.postDate || a.createdAt).getTime();
+      const db = new Date(b.postDate || b.createdAt).getTime();
+      return sortOption === "oldest" ? da - db : db - da;
+    });
+  }, [filteredLinks, sortOption]);
+
+  // badge NEW consistente com a ordenação
+  const recentIds = useMemo(() => new Set(sortedAll.slice(0, 5).map((l) => l.id)), [sortedAll]);
 
   const formatDateHeader = (dateString: string): string => {
     const date = new Date(dateString);
@@ -132,20 +139,16 @@ const UnknownContent: React.FC = () => {
   };
 
   const groupPostsByDate = (posts: LinkItem[]) => {
-    const grouped: { [key: string]: LinkItem[] } = {};
-
+    const grouped: Record<string, LinkItem[]> = {};
     posts.forEach((post) => {
       const dateKey = formatDateHeader(post.postDate || post.createdAt);
-      if (!grouped[dateKey]) {
-        grouped[dateKey] = [];
-      }
+      if (!grouped[dateKey]) grouped[dateKey] = [];
       grouped[dateKey].push(post);
     });
-
     return grouped;
   };
 
-  const groupedLinks = groupPostsByDate(filteredLinks);
+  const groupedLinks = useMemo(() => groupPostsByDate(sortedAll), [sortedAll]);
 
   return (
     <div
@@ -161,89 +164,67 @@ const UnknownContent: React.FC = () => {
       </Helmet>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
         {/* Unknown Header */}
-<motion.div
-  initial={{ opacity: 0, y: -30 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.8 }}
-  className="text-center mb-12"
->
-  <motion.div
-    className="inline-flex items-center gap-4 mb-6"
-    initial={{ opacity: 0, scale: 0.9 }}
-    animate={{ opacity: 1, scale: 1 }}
-    transition={{ duration: 0.8, delay: 0.2 }}
-  >
-    {/* Ícone HelpCircle animado */}
-    <motion.div
-      animate={{
-        rotate: [0, 10, -10, 0],
-        y: [0, -4, 0, 4, 0],
-        scale: [1, 1.05, 1],
-      }}
-      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-    >
-      <HelpCircle className="w-12 h-12 text-slate-500" />
-    </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: -30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-12"
+        >
+          <motion.div
+            className="inline-flex items-center gap-4 mb-6"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            <motion.div
+              animate={{ rotate: [0, 10, -10, 0], y: [0, -4, 0, 4, 0], scale: [1, 1.05, 1] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <HelpCircle className="w-12 h-12 text-slate-500" />
+            </motion.div>
 
-    <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-500 via-slate-600 to-slate-700 2xl:text-3xl">
-      Unknown Content
-    </h1>
+            <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-500 via-slate-600 to-slate-700 2xl:text-3xl">
+              Unknown Content
+            </h1>
 
-    {/* Ícone Eye animado */}
-    <motion.div
-      animate={{
-        rotate: [0, -10, 10, 0],
-        y: [0, 4, 0, -4, 0],
-        scale: [1, 1.05, 1],
-      }}
-      transition={{ duration: 3, repeat: Infinity, delay: 1, ease: "easeInOut" }}
-    >
-      <Eye className="w-12 h-12 text-slate-500" />
-    </motion.div>
-  </motion.div>
+            <motion.div
+              animate={{ rotate: [0, -10, 10, 0], y: [0, 4, 0, -4, 0], scale: [1, 1.05, 1] }}
+              transition={{ duration: 3, repeat: Infinity, delay: 1, ease: "easeInOut" }}
+            >
+              <Eye className="w-12 h-12 text-slate-500" />
+            </motion.div>
+          </motion.div>
 
-  <motion.p
-    className="text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed"
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.8, delay: 0.4 }}
-  >
-    Unknown abg/asian models
-  </motion.p>
-</motion.div>
+          <motion.p
+            className="text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+          >
+            Unknown abg/asian models
+          </motion.p>
+        </motion.div>
 
-
-        {/* Header Section */}
+        {/* Filter Bar */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative z-[60]">
           <div
             className={`backdrop-blur-xl border rounded-3xl p-6 shadow-2xl ${
-              isDark
-                ? "bg-slate-800/60 border-slate-700/50"
-                : "bg-white/80 border-gray-200/50"
+              isDark ? "bg-slate-800/60 border-slate-700/50" : "bg-white/80 border-gray-200/50"
             }`}
           >
             <div
               className={`flex flex-col lg:flex-row items-center gap-4 rounded-2xl px-6 py-4 border shadow-inner ${
-                isDark
-                  ? "bg-slate-700/50 border-slate-600/30"
-                  : "bg-gray-100/50 border-gray-300/30"
+                isDark ? "bg-slate-700/50 border-slate-600/30" : "bg-gray-100/50 border-gray-300/30"
               }`}
             >
               {/* Search Bar */}
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                <HelpCircle
-                  className={`w-5 h-5 ${
-                    isDark ? "text-slate-400" : "text-slate-600"
-                  }`}
-                />
+                <HelpCircle className={`w-5 h-5 ${isDark ? "text-slate-400" : "text-slate-600"}`} />
                 <input
                   type="text"
                   className={`flex-1 bg-transparent border-none outline-none text-lg ${
-                    isDark
-                      ? "text-white placeholder-gray-400"
-                      : "text-gray-900 placeholder-gray-500"
+                    isDark ? "text-white placeholder-gray-400" : "text-gray-900 placeholder-gray-500"
                   }`}
                   placeholder="Search unknown content..."
                   value={searchName}
@@ -254,50 +235,40 @@ const UnknownContent: React.FC = () => {
                     className={`w-4 h-4 border-2 border-t-transparent rounded-full animate-spin ${
                       isDark ? "border-slate-400" : "border-slate-600"
                     }`}
-                  ></div>
+                  />
                 )}
               </div>
 
-              {/* Filter Buttons */}
+              {/* Filters */}
               <div className="flex items-center gap-2">
                 <div className="month-filter-container relative z-50">
-                  <MonthFilter
-                    selectedMonth={selectedMonth}
-                    onMonthChange={setSelectedMonth}
-                    themeColor="slate"
-                  />
+                  <MonthFilter selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} themeColor="slate" />
                 </div>
 
-<SortFilter
-  selected={sortOption}
-  onChange={setSortOption}
-  themeColor="red"
-/>
+                <SortFilter selected={sortOption} onChange={setSortOption} themeColor="slate" />
               </div>
             </div>
           </div>
         </div>
 
         {/* Content Grid */}
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-0">
           <main>
             {loading ? (
               <LoadingUnknown />
-            ) : filteredLinks.length > 0 ? (
+            ) : sortedAll.length > 0 ? (
               <>
                 {Object.entries(groupedLinks)
                   .sort(([dateA], [dateB]) => {
-                    const parseDateA = new Date(dateA);
-                    const parseDateB = new Date(dateB);
-                    return parseDateB.getTime() - parseDateA.getTime();
+                    const a = new Date(dateA).getTime();
+                    const b = new Date(dateB).getTime();
+                    return sortOption === "oldest" ? a - b : b - a;
                   })
                   .map(([date, posts]) => (
                     <div key={date} className="mb-8">
                       <h2
                         className={`text-xl font-bold mb-4 pb-2 border-b font-orbitron flex items-center gap-3 ${
-                          isDark
-                            ? "text-gray-300 border-slate-700/50"
-                            : "text-gray-700 border-gray-300/50"
+                          isDark ? "text-gray-300 border-slate-700/50" : "text-gray-700 border-gray-300/50"
                         }`}
                       >
                         <div
@@ -306,24 +277,23 @@ const UnknownContent: React.FC = () => {
                               ? "bg-gradient-to-b from-slate-500 to-slate-600 shadow-slate-500/30"
                               : "bg-gradient-to-b from-slate-600 to-slate-700 shadow-slate-500/20"
                           }`}
-                        ></div>
+                        />
                         <span
                           className={`bg-gradient-to-r bg-clip-text text-transparent ${
-                            isDark
-                              ? "from-slate-400 to-slate-300"
-                              : "from-slate-600 to-slate-500"
+                            isDark ? "from-slate-400 to-slate-300" : "from-slate-600 to-slate-500"
                           }`}
                         >
                           {date}
                         </span>
                       </h2>
+
                       <div className="space-y-2">
                         {posts
-                          .sort(
-                            (a, b) =>
-                              new Date(b.postDate || b.createdAt).getTime() -
-                              new Date(a.postDate || a.createdAt).getTime()
-                          )
+                          .sort((a, b) => {
+                            const da = new Date(a.postDate || a.createdAt).getTime();
+                            const db = new Date(b.postDate || b.createdAt).getTime();
+                            return sortOption === "oldest" ? da - db : db - da;
+                          })
                           .map((link, index) => (
                             <motion.div
                               key={link.id}
@@ -357,53 +327,43 @@ const UnknownContent: React.FC = () => {
                             >
                               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                 <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
-                                  {link.contentType &&
-                                    link.contentType !== "unknown" && (
-                                      <div
-                                        className={`w-2 h-2 rounded-full ${
-                                          link.contentType === "asian"
-                                            ? "bg-purple-400"
-                                            : link.contentType === "western"
-                                            ? "bg-orange-400"
-                                            : link.contentType === "banned"
-                                            ? "bg-red-400"
-                                            : link.contentType === "vip"
-                                            ? "bg-yellow-400"
-                                            : "bg-gray-400"
-                                        }`}
-                                      ></div>
-                                    )}
-                                  <HelpCircle
-                                    className={`w-5 h-5 ${
-                                      isDark ? "text-slate-400" : "text-slate-600"
-                                    }`}
-                                  />
+                                  {link.contentType && link.contentType !== "unknown" && (
+                                    <div
+                                      className={`w-2 h-2 rounded-full ${
+                                        link.contentType === "asian"
+                                          ? "bg-purple-400"
+                                          : link.contentType === "western"
+                                          ? "bg-orange-400"
+                                          : link.contentType === "banned"
+                                          ? "bg-red-400"
+                                          : link.contentType === "vip"
+                                          ? "bg-yellow-400"
+                                          : "bg-gray-400"
+                                      }`}
+                                    />
+                                  )}
+                                  <HelpCircle className={`w-5 h-5 ${isDark ? "text-slate-400" : "text-slate-600"}`} />
                                   <h3
                                     className={`text-sm sm:text-lg font-bold transition-colors duration-300 font-orbitron relative truncate ${
-                                      isDark
-                                        ? "text-white group-hover:text-slate-300"
-                                        : "text-gray-900 group-hover:text-slate-600"
+                                      isDark ? "text-white group-hover:text-slate-300" : "text-gray-900 group-hover:text-slate-600"
                                     }`}
                                   >
                                     {link.name}
                                     <div
                                       className={`absolute -bottom-1 left-0 w-16 h-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
-                                        isDark
-                                          ? "bg-gradient-to-r from-slate-500 to-slate-300"
-                                          : "bg-gradient-to-r from-slate-600 to-slate-500"
+                                        isDark ? "bg-gradient-to-r from-slate-500 to-slate-300" : "bg-gradient-to-r from-slate-600 to-slate-500"
                                       }`}
-                                    ></div>
+                                    />
                                   </h3>
                                   <div
                                     className={`hidden sm:block h-px bg-gradient-to-r to-transparent flex-1 max-w-20 transition-all duration-300 ${
-                                      isDark
-                                        ? "from-slate-500/50 group-hover:from-slate-400/70"
-                                        : "from-slate-400/50 group-hover:from-slate-500/70"
+                                      isDark ? "from-slate-500/50 group-hover:from-slate-400/70" : "from-slate-400/50 group-hover:from-slate-500/70"
                                     }`}
-                                  ></div>
+                                  />
                                 </div>
+
                                 <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                                  {recentLinks.includes(link) && (
+                                  {recentIds.has(link.id) && (
                                     <span
                                       className={`inline-flex items-center px-2 sm:px-4 py-1 sm:py-2 text-white text-xs font-bold rounded-full shadow-lg animate-pulse border font-roboto ${
                                         isDark
@@ -411,36 +371,33 @@ const UnknownContent: React.FC = () => {
                                           : "bg-gradient-to-r from-slate-600 to-slate-700 border-slate-500/30"
                                       }`}
                                     >
-                                      <i className="fa-solid fa-star mr-1 text-xs hidden sm:inline"></i>
+                                      <i className="fa-solid fa-star mr-1 text-xs hidden sm:inline" />
                                       NEW
                                     </span>
                                   )}
-                                  {link.contentType &&
-                                    link.contentType !== "unknown" && (
-                                      <span
-                                        className={`inline-flex items-center px-3 py-1 text-xs font-bold rounded-full ${
-                                          link.contentType === "asian"
-                                            ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
-                                            : link.contentType === "western"
-                                            ? "bg-orange-500/20 text-orange-300 border border-orange-500/30"
-                                            : link.contentType === "banned"
-                                            ? "bg-red-500/20 text-red-300 border border-red-500/30"
-                                            : link.contentType === "vip"
-                                            ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
-                                            : ""
-                                        }`}
-                                      >
-                                        {link.contentType.toUpperCase()}
-                                      </span>
-                                    )}
+                                  {link.contentType && link.contentType !== "unknown" && (
+                                    <span
+                                      className={`inline-flex items-center px-3 py-1 text-xs font-bold rounded-full ${
+                                        link.contentType === "asian"
+                                          ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                                          : link.contentType === "western"
+                                          ? "bg-orange-500/20 text-orange-300 border border-orange-500/30"
+                                          : link.contentType === "banned"
+                                          ? "bg-red-500/20 text-red-300 border border-red-500/30"
+                                          : link.contentType === "vip"
+                                          ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
+                                          : ""
+                                      }`}
+                                    >
+                                      {link.contentType.toUpperCase()}
+                                    </span>
+                                  )}
                                   <span
                                     className={`inline-flex items-center px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm font-medium rounded-full border backdrop-blur-sm font-roboto ${
-                                      isDark
-                                        ? "bg-gray-700/70 text-gray-300 border-gray-600/50"
-                                        : "bg-gray-200/70 text-gray-700 border-gray-300/50"
+                                      isDark ? "bg-gray-700/70 text-gray-300 border-gray-600/50" : "bg-gray-200/70 text-gray-700 border-gray-300/50"
                                     }`}
                                   >
-                                    <i className="fa-solid fa-tag mr-1 sm:mr-2 text-xs"></i>
+                                    <i className="fa-solid fa-tag mr-1 sm:mr-2 text-xs" />
                                     {link.category}
                                   </span>
                                 </div>
@@ -466,12 +423,12 @@ const UnknownContent: React.FC = () => {
                     >
                       {loadingMore ? (
                         <>
-                          <i className="fa-solid fa-spinner fa-spin mr-3"></i>
+                          <i className="fa-solid fa-spinner fa-spin mr-3" />
                           Loading More...
                         </>
                       ) : (
                         <>
-                          <i className="fa-solid fa-plus mr-3"></i>
+                          <i className="fa-solid fa-plus mr-3" />
                           Load More Content
                         </>
                       )}
@@ -484,20 +441,11 @@ const UnknownContent: React.FC = () => {
                 <div className="mb-8">
                   <HelpCircle className="w-16 h-16 text-slate-500 mx-auto" />
                 </div>
-                <h3
-                  className={`text-3xl font-bold mb-4 font-orbitron ${
-                    isDark ? "text-white" : "text-gray-900"
-                  }`}
-                >
+                <h3 className={`text-3xl font-bold mb-4 font-orbitron ${isDark ? "text-white" : "text-gray-900"}`}>
                   No Unknown Content Found
                 </h3>
-                <p
-                  className={`text-lg font-roboto ${
-                    isDark ? "text-gray-400" : "text-gray-600"
-                  }`}
-                >
-                  Try adjusting your search or filters to find what you're looking
-                  for.
+                <p className={`text-lg font-roboto ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                  Try adjusting your search or filters to find what you're looking for.
                 </p>
               </div>
             )}

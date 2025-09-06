@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
-import { Crown, Calendar, Plus, Star, Sparkles, HelpCircle, Eye } from "lucide-react";
+import { Crown, Plus, Star, Sparkles, HelpCircle, Eye } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import MonthFilter from "../components/MonthFilter";
 import SortFilter, { SortValue } from "../components/SortFilter";
@@ -57,8 +57,6 @@ const VIPUnknownPage: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedMonth, setSelectedMonth] = useState("");
   const [sortOption, setSortOption] = useState<SortValue>("mostRecent");
-    
-  
 
   function decodeModifiedBase64<T>(encodedStr: string): T {
     const fixedBase64 = encodedStr.slice(0, 2) + encodedStr.slice(3);
@@ -71,12 +69,14 @@ const VIPUnknownPage: React.FC = () => {
       if (!isLoadMore) setLoading(true);
       setSearchLoading(true);
 
+      const sortOrder = sortOption === "oldest" ? "ASC" : "DESC";
+
       const params = new URLSearchParams({
         page: page.toString(),
         sortBy: "postDate",
-        sortOrder: "DESC",
+        sortOrder,
         limit: "24",
-        contentType: "vip-unknown"
+        contentType: "vip-unknown",
       });
 
       if (searchName) params.append("search", searchName);
@@ -95,14 +95,11 @@ const VIPUnknownPage: React.FC = () => {
         }
       );
 
-      if (!response.data?.data) {
-        throw new Error("Invalid server response");
-      }
+      if (!response.data?.data) throw new Error("Invalid server response");
 
-      const decoded = decodeModifiedBase64<{
-        data: LinkItem[];
-        totalPages: number;
-      }>(response.data.data);
+      const decoded = decodeModifiedBase64<{ data: LinkItem[]; totalPages: number }>(
+        response.data.data
+      );
 
       const { data: rawData, totalPages } = decoded;
 
@@ -117,19 +114,17 @@ const VIPUnknownPage: React.FC = () => {
       setTotalPages(totalPages);
       setHasMoreContent(page < totalPages);
 
-      const uniqueCategories = Array.from(
-        new Set(rawData.map((item) => item.category))
-      ).map((category) => ({
-        id: category,
-        name: category,
-        category,
-      }));
+      const uniqueCategories = Array.from(new Set(rawData.map((item) => item.category))).map(
+        (category) => ({
+          id: category,
+          name: category,
+          category,
+        })
+      );
 
       setCategories((prev) => {
         const existingCategories = new Set(prev.map((c) => c.category));
-        const newCategories = uniqueCategories.filter(
-          (c) => !existingCategories.has(c.category)
-        );
+        const newCategories = uniqueCategories.filter((c) => !existingCategories.has(c.category));
         return [...prev, ...newCategories];
       });
     } catch (error) {
@@ -148,7 +143,7 @@ const VIPUnknownPage: React.FC = () => {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchName, selectedCategory, selectedRegion, selectedMonth, dateFilter]);
+  }, [searchName, selectedCategory, selectedRegion, selectedMonth, dateFilter, sortOption]);
 
   const handleLoadMore = () => {
     if (loadingMore || currentPage >= totalPages) return;
@@ -195,57 +190,46 @@ const VIPUnknownPage: React.FC = () => {
       </Helmet>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative z-[60]">
-
         <motion.div
-  initial={{ opacity: 0, y: -30 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.8 }}
-  className="text-center mb-12"
->
-  <motion.div
-    className="inline-flex items-center gap-4 mb-6"
-    initial={{ opacity: 0, scale: 0.9 }}
-    animate={{ opacity: 1, scale: 1 }}
-    transition={{ duration: 0.8, delay: 0.2 }}
-  >
-    {/* Ícone HelpCircle animado */}
-    <motion.div
-      animate={{
-        rotate: [0, 10, -10, 0],
-        y: [0, -4, 0, 4, 0],
-        scale: [1, 1.05, 1],
-      }}
-      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-    >
-      <HelpCircle className="w-12 h-12 text-yellow-500" />
-    </motion.div>
+          initial={{ opacity: 0, y: -30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-12"
+        >
+          <motion.div
+            className="inline-flex items-center gap-4 mb-6"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            <motion.div
+              animate={{ rotate: [0, 10, -10, 0], y: [0, -4, 0, 4, 0], scale: [1, 1.05, 1] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <HelpCircle className="w-12 h-12 text-yellow-500" />
+            </motion.div>
 
-    <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700 2xl:text-3xl">
-      Unknown Content
-    </h1>
+            <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700 2xl:text-3xl">
+              Unknown Content
+            </h1>
 
-    {/* Ícone Eye animado */}
-    <motion.div
-      animate={{
-        rotate: [0, -10, 10, 0],
-        y: [0, 4, 0, -4, 0],
-        scale: [1, 1.05, 1],
-      }}
-      transition={{ duration: 3, repeat: Infinity, delay: 1, ease: "easeInOut" }}
-    >
-      <Eye className="w-12 h-12 text-yellow-500" />
-    </motion.div>
-  </motion.div>
+            <motion.div
+              animate={{ rotate: [0, -10, 10, 0], y: [0, 4, 0, -4, 0], scale: [1, 1.05, 1] }}
+              transition={{ duration: 3, repeat: Infinity, delay: 1, ease: "easeInOut" }}
+            >
+              <Eye className="w-12 h-12 text-yellow-500" />
+            </motion.div>
+          </motion.div>
 
-  <motion.p
-    className="text-lg text-yellow-600 max-w-3xl mx-auto leading-relaxed"
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.8, delay: 0.4 }}
-  >
-    Unknown abg/asian models
-  </motion.p>
-</motion.div>
+          <motion.p
+            className="text-lg text-yellow-600 max-w-3xl mx-auto leading-relaxed"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+          >
+            Unknown abg/asian models
+          </motion.p>
+        </motion.div>
 
         <div
           className={`backdrop-blur-xl border rounded-3xl p-6 shadow-2xl ${
@@ -259,7 +243,6 @@ const VIPUnknownPage: React.FC = () => {
               isDark ? "bg-gray-700/50 border-yellow-500/20" : "bg-gray-100/50 border-yellow-400/30"
             }`}
           >
-            {/* Search Bar */}
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <Crown className="text-yellow-400 w-5 h-5 animate-pulse" />
@@ -282,32 +265,16 @@ const VIPUnknownPage: React.FC = () => {
                 ></div>
               )}
             </div>
-           
 
-            {/* Category and Region Select */}
             <div className="flex items-center gap-2">
+              <MonthFilter selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} themeColor="yellow" />
 
-
-              <MonthFilter
-                selectedMonth={selectedMonth}
-                onMonthChange={setSelectedMonth}
-                themeColor="yellow"
-              />
-
-                            <SortFilter
-  selected={sortOption}
-  onChange={setSortOption}
-  themeColor="yellow"
-/>
-
-
-
+              <SortFilter selected={sortOption} onChange={setSortOption} themeColor="yellow" />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Content Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-0">
         <main>
           {loading ? (
@@ -316,17 +283,15 @@ const VIPUnknownPage: React.FC = () => {
             <>
               {Object.entries(groupedLinks)
                 .sort(([dateA], [dateB]) => {
-                  const parseDateA = new Date(dateA);
-                  const parseDateB = new Date(dateB);
-                  return parseDateB.getTime() - parseDateA.getTime();
+                  const a = new Date(dateA).getTime();
+                  const b = new Date(dateB).getTime();
+                  return sortOption === "oldest" ? a - b : b - a;
                 })
                 .map(([date, posts]) => (
                   <div key={date} className="mb-8">
                     <h2
                       className={`text-xl font-bold mb-4 pb-2 border-b font-orbitron flex items-center gap-3 ${
-                        isDark
-                          ? "text-gray-300 border-yellow-500/30"
-                          : "text-gray-700 border-yellow-400/40"
+                        isDark ? "text-gray-300 border-yellow-500/30" : "text-gray-700 border-yellow-400/40"
                       }`}
                     >
                       <div className="w-3 h-8 bg-gradient-to-b from-yellow-500 to-gray-600 rounded-full shadow-lg shadow-yellow-500/30"></div>
@@ -339,52 +304,49 @@ const VIPUnknownPage: React.FC = () => {
                     </h2>
                     <div className="space-y-2">
                       {posts
-                        .sort(
-                          (a, b) =>
-                            new Date(b.postDate || b.createdAt).getTime() -
-                            new Date(a.postDate || a.createdAt).getTime()
-                        )
+                        .sort((a, b) => {
+                          const at = new Date(a.postDate || a.createdAt).getTime();
+                          const bt = new Date(b.postDate || b.createdAt).getTime();
+                          return sortOption === "oldest" ? at - bt : bt - at;
+                        })
                         .map((link, index) => (
-<motion.div
-  key={link.id}
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ delay: index * 0.05 }}
-  className={`group rounded-xl p-3 transition-all duration-300 cursor-pointer backdrop-blur-sm shadow-lg hover:shadow-xl transform hover:scale-[1.01] ${
-    isDark
-      ? "bg-gray-800/60 hover:bg-gray-700/80 border-yellow-500/30 hover:border-gray-400/60 hover:shadow-gray-500/20"
-      : "bg-white/60 hover:bg-gray-50/80 border-yellow-400/40 hover:border-gray-400/60 hover:shadow-gray-400/20"
-  } border`}
-  onClick={() => {
-    const contentType = link.contentType || 'vip-unknown';
-    switch (contentType) {
-      case 'vip-asian':
-        navigate(`/vip-asian/${link.slug}`);
-        break;
-      case 'vip-western':
-        navigate(`/vip-western/${link.slug}`);
-        break;
-      case 'vip-banned':
-        navigate(`/vip-banned/${link.slug}`);
-        break;
-      case 'vip-unknown':
-        navigate(`/vip-unknown/${link.slug}`);
-        break;
-      default:
-        navigate(`/vip-unknown/${link.slug}`);
-    }
-  }}
->
-
+                          <motion.div
+                            key={link.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className={`group rounded-xl p-3 transition-all duration-300 cursor-pointer backdrop-blur-sm shadow-lg hover:shadow-xl transform hover:scale-[1.01] ${
+                              isDark
+                                ? "bg-gray-800/60 hover:bg-gray-700/80 border-yellow-500/30 hover:border-gray-400/60 hover:shadow-gray-500/20"
+                                : "bg-white/60 hover:bg-gray-50/80 border-yellow-400/40 hover:border-gray-400/60 hover:shadow-gray-400/20"
+                            } border`}
+                            onClick={() => {
+                              const contentType = link.contentType || "vip-unknown";
+                              switch (contentType) {
+                                case "vip-asian":
+                                  navigate(`/vip-asian/${link.slug}`);
+                                  break;
+                                case "vip-western":
+                                  navigate(`/vip-western/${link.slug}`);
+                                  break;
+                                case "vip-banned":
+                                  navigate(`/vip-banned/${link.slug}`);
+                                  break;
+                                case "vip-unknown":
+                                  navigate(`/vip-unknown/${link.slug}`);
+                                  break;
+                                default:
+                                  navigate(`/vip-unknown/${link.slug}`);
+                              }
+                            }}
+                          >
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                               <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
                                 <Crown className="w-5 h-5 text-yellow-400 animate-pulse" />
                                 <HelpCircle className="w-4 h-4 text-gray-400" />
                                 <h3
                                   className={`text-sm sm:text-lg font-bold transition-colors duration-300 font-orbitron relative truncate ${
-                                    isDark
-                                      ? "text-white group-hover:text-gray-300"
-                                      : "text-gray-900 group-hover:text-gray-600"
+                                    isDark ? "text-white group-hover:text-gray-300" : "text-gray-900 group-hover:text-gray-600"
                                   }`}
                                 >
                                   {link.name}
@@ -405,17 +367,21 @@ const VIPUnknownPage: React.FC = () => {
                                   </span>
                                 )}
 
-                                {/* Content Type Badge for cross-section results */}
-                                {link.contentType && link.contentType !== 'vip-unknown' && (
-                                  <span className={`inline-flex items-center px-3 py-1 text-xs font-bold rounded-full ${
-                                    link.contentType === 'vip-asian' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' :
-                                    link.contentType === 'vip-western' ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30' :
-                                    link.contentType === 'vip-banned' ? 'bg-red-500/20 text-red-300 border border-red-500/30' : ''
-                                  }`}>
-                                    {link.contentType.replace('vip-', '').toUpperCase()}
+                                {link.contentType && link.contentType !== "vip-unknown" && (
+                                  <span
+                                    className={`inline-flex items-center px-3 py-1 text-xs font-bold rounded-full ${
+                                      link.contentType === "vip-asian"
+                                        ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                                        : link.contentType === "vip-western"
+                                        ? "bg-orange-500/20 text-orange-300 border border-orange-500/30"
+                                        : link.contentType === "vip-banned"
+                                        ? "bg-red-500/20 text-red-300 border border-red-500/30"
+                                        : ""
+                                    }`}
+                                  >
+                                    {link.contentType.replace("vip-", "").toUpperCase()}
                                   </span>
                                 )}
-
 
                                 <span
                                   className={`inline-flex items-center px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm font-medium rounded-full border backdrop-blur-sm font-roboto ${
@@ -465,16 +431,11 @@ const VIPUnknownPage: React.FC = () => {
                 <Crown className="w-16 h-16 text-yellow-500 animate-pulse" />
                 <HelpCircle className="w-12 h-12 text-gray-500" />
               </div>
-              <h3
-                className={`text-3xl font-bold mb-4 font-orbitron ${
-                  isDark ? "text-white" : "text-gray-900"
-                }`}
-              >
+              <h3 className={`text-3xl font-bold mb-4 font-orbitron ${isDark ? "text-white" : "text-gray-900"}`}>
                 No VIP Unknown Content Found
               </h3>
               <p className="text-gray-400 text-lg font-roboto">
-                Try adjusting your search or filters to find premium unknown
-                content.
+                Try adjusting your search or filters to find premium unknown content.
               </p>
             </div>
           )}

@@ -60,11 +60,11 @@ const MonthFilter: React.FC<MonthFilterProps> = ({
       },
       yellow: {
         button: isDark 
-          ? 'bg-gray-700/50 hover:bg-yellow-500/20 text-gray-300 hover:text-yellow-300 border-yellow-500/30'
-          : 'bg-gray-200/50 hover:bg-yellow-100 text-gray-700 hover:text-yellow-700 border-yellow-400/40',
+          ? 'bg-gray-700/50 hover:bg-yellow-500/20 text-gray-300 hover:text-yellow-300 '
+          : 'bg-gray-200/50 hover:bg-yellow-100 text-gray-700 hover:text-yellow-700 ',
         dropdown: isDark
-          ? 'bg-gray-800 border-yellow-500/30'
-          : 'bg-white border-yellow-400/40',
+          ? 'bg-gray-800 '
+          : 'bg-white ',
         item: isDark
           ? 'hover:bg-yellow-500/20 text-gray-300 hover:text-yellow-300'
           : 'hover:bg-yellow-100 text-gray-700 hover:text-yellow-700'

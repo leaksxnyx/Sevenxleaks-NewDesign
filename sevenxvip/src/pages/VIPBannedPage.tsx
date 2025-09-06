@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+// VIPBannedPage.tsx
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
-import { Crown, Calendar, Plus, Star, Sparkles, Shield, AlertTriangle } from "lucide-react";
-import VIPHeader from "../components/VIP/VIPHeader";
+import { Crown, Plus, Star, Shield, AlertTriangle } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import MonthFilter from "../components/MonthFilter";
 import SortFilter, { SortValue } from "../components/SortFilter";
@@ -43,6 +43,7 @@ const VIPBannedPage: React.FC = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const isDark = theme === "dark";
+
   const [links, setLinks] = useState<LinkItem[]>([]);
   const [filteredLinks, setFilteredLinks] = useState<LinkItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -56,9 +57,7 @@ const VIPBannedPage: React.FC = () => {
   const [hasMoreContent, setHasMoreContent] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
-  const [dateFilter, setDateFilter] = useState("all");
-    const [sortOption, setSortOption] = useState<SortValue>("mostRecent");
-  
+  const [sortOption, setSortOption] = useState<SortValue>("mostRecent");
 
   function decodeModifiedBase64<T>(encodedStr: string): T {
     const fixedBase64 = encodedStr.slice(0, 2) + encodedStr.slice(3);
@@ -72,18 +71,18 @@ const VIPBannedPage: React.FC = () => {
       setSearchLoading(true);
 
       const params = new URLSearchParams({
-        page: page.toString(),
+        page: String(page),
         sortBy: "postDate",
-        sortOrder: "DESC",
+        sortOrder: sortOption === "oldest" ? "ASC" : "DESC",
         limit: "24",
-        contentType: "vip-banned"
+        contentType: "vip-banned",
       });
 
       if (searchName) params.append("search", searchName);
       if (selectedCategory) params.append("category", selectedCategory);
       if (selectedRegion) params.append("region", selectedRegion);
       if (selectedMonth) params.append("month", selectedMonth);
-      if (dateFilter !== "all") params.append("dateFilter", dateFilter);
+      // não enviar dateFilter redundante
 
       const response = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/universal-search/search?${params}`,
@@ -95,9 +94,7 @@ const VIPBannedPage: React.FC = () => {
         }
       );
 
-      if (!response.data?.data) {
-        throw new Error("Invalid server response");
-      }
+      if (!response.data?.data) throw new Error("Invalid server response");
 
       const decoded = decodeModifiedBase64<{ data: LinkItem[]; totalPages: number }>(
         response.data.data
@@ -116,18 +113,16 @@ const VIPBannedPage: React.FC = () => {
       setTotalPages(totalPages);
       setHasMoreContent(page < totalPages);
 
-      const uniqueCategories = Array.from(new Set(rawData.map((item) => item.category))).map(
-        (category) => ({
-          id: category,
-          name: category,
-          category,
-        })
-      );
+      const uniqueCategories = Array.from(new Set(rawData.map((i) => i.category))).map((category) => ({
+        id: category,
+        name: category,
+        category,
+      }));
 
       setCategories((prev) => {
-        const existingCategories = new Set(prev.map((c) => c.category));
-        const newCategories = uniqueCategories.filter((c) => !existingCategories.has(c.category));
-        return [...prev, ...newCategories];
+        const existing = new Set(prev.map((c) => c.category));
+        const news = uniqueCategories.filter((c) => !existing.has(c.category));
+        return [...prev, ...news];
       });
     } catch (error) {
       console.error("Error fetching VIP Banned content:", error);
@@ -139,48 +134,51 @@ const VIPBannedPage: React.FC = () => {
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const t = setTimeout(() => {
       setCurrentPage(1);
       fetchContent(1);
     }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchName, selectedCategory, selectedRegion, selectedMonth, dateFilter]);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchName, selectedCategory, selectedRegion, selectedMonth, sortOption]);
 
   const handleLoadMore = () => {
     if (loadingMore || currentPage >= totalPages) return;
     setLoadingMore(true);
-    const nextPage = currentPage + 1;
-    setCurrentPage(nextPage);
-    fetchContent(nextPage, true);
+    const next = currentPage + 1;
+    setCurrentPage(next);
+    fetchContent(next, true);
   };
 
-  const recentLinks = filteredLinks.slice(0, 5);
+  // ordenação única e coerente
+  const sortedAll = useMemo(() => {
+    const arr = [...filteredLinks];
+    return arr.sort((a, b) => {
+      const da = new Date(a.postDate || a.createdAt).getTime();
+      const db = new Date(b.postDate || b.createdAt).getTime();
+      return sortOption === "oldest" ? da - db : db - da;
+    });
+  }, [filteredLinks, sortOption]);
+
+  // badge "NEW VIP" coerente
+  const recentIds = useMemo(() => new Set(sortedAll.slice(0, 5).map((l) => l.id)), [sortedAll]);
 
   const formatDateHeader = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "2-digit",
-    });
+    const d = new Date(dateString);
+    return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "2-digit" });
   };
 
   const groupPostsByDate = (posts: LinkItem[]) => {
-    const grouped: { [key: string]: LinkItem[] } = {};
-
-    posts.forEach((post) => {
-      const dateKey = formatDateHeader(post.postDate || post.createdAt);
-      if (!grouped[dateKey]) {
-        grouped[dateKey] = [];
-      }
-      grouped[dateKey].push(post);
+    const grouped: Record<string, LinkItem[]> = {};
+    posts.forEach((p) => {
+      const key = formatDateHeader(p.postDate || p.createdAt);
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(p);
     });
-
     return grouped;
   };
 
-  const groupedLinks = groupPostsByDate(filteredLinks);
+  const groupedLinks = useMemo(() => groupPostsByDate(sortedAll), [sortedAll]);
 
   return (
     <div
@@ -195,54 +193,46 @@ const VIPBannedPage: React.FC = () => {
         <link rel="canonical" href="https://sevenxleaks.com/vip-banned" />
       </Helmet>
 
-<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative z-[60] ">
-                <motion.div 
-                initial={{ opacity: 0, y: -30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-                className="text-center mb-12"
-              >
-                <motion.div 
-                  className="inline-flex items-center gap-4 mb-6"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.8, delay: 0.2 }}
-                >
-                  <motion.div
-                    animate={{ rotate: [0, 10, -10, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    <Shield className="w-12 h-12 text-yellow-500" />
-                  </motion.div>
-                  <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700 2xl:text-3xl ">
-                    Banned Content
-                  </h1>
-                  <motion.div
-                    animate={{ rotate: [0, -10, 10, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-                  >
-                    <AlertTriangle className="w-12 h-12 text-yellow-500" />
-                  </motion.div>
-                </motion.div>
-                
-                <motion.p 
-                  className="text-lg text-yellow-600 max-w-3xl mx-auto leading-relaxed"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.4 }}
-                >
-                  Content banned from Erome
-                </motion.p>
-              </motion.div>
-</div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative z-[60] ">
+        <motion.div
+          initial={{ opacity: 0, y: -30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-12"
+        >
+          <motion.div
+            className="inline-flex items-center gap-4 mb-6"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ duration: 2, repeat: Infinity }}>
+              <Shield className="w-12 h-12 text-yellow-500" />
+            </motion.div>
+            <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700 2xl:text-3xl ">
+              Banned Content
+            </h1>
+            <motion.div animate={{ rotate: [0, -10, 10, 0] }} transition={{ duration: 2, repeat: Infinity, delay: 1 }}>
+              <AlertTriangle className="w-12 h-12 text-yellow-500" />
+            </motion.div>
+          </motion.div>
+
+          <motion.p
+            className="text-lg text-yellow-600 max-w-3xl mx-auto leading-relaxed"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+          >
+            Content banned from Erome
+          </motion.p>
+        </motion.div>
+      </div>
 
       {/* Filter Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative z-[60]">
         <div
           className={`backdrop-blur-xl border rounded-3xl p-6 shadow-2xl ${
-            isDark
-              ? "bg-gray-800/60 border-yellow-500/30 shadow-yellow-500/10"
-              : "bg-white/80 border-yellow-400/40 shadow-yellow-400/10"
+            isDark ? "bg-gray-800/60 border-yellow-500/30 shadow-yellow-500/10" : "bg-white/80 border-yellow-400/40 shadow-yellow-400/10"
           }`}
         >
           <div
@@ -250,7 +240,7 @@ const VIPBannedPage: React.FC = () => {
               isDark ? "bg-gray-700/50 border-yellow-500/20" : "bg-gray-100/50 border-yellow-400/30"
             }`}
           >
-            {/* Search Bar */}
+            {/* Search */}
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <Crown className="text-yellow-400 w-5 h-5 animate-pulse" />
@@ -266,47 +256,35 @@ const VIPBannedPage: React.FC = () => {
                 onChange={(e) => setSearchName(e.target.value)}
               />
               {searchLoading && (
-                <div
-                  className={`w-4 h-4 border-2 border-t-transparent rounded-full animate-spin ${
-                    isDark ? "border-yellow-400" : "border-yellow-600"
-                  }`}
-                ></div>
+                <div className={`w-4 h-4 border-2 border-t-transparent rounded-full animate-spin ${isDark ? "border-yellow-400" : "border-yellow-600"}`} />
               )}
             </div>
 
-            {/* Filter Controls */}
+            {/* Filters */}
             <div className="flex items-center gap-2">
-             
-              
               <div className="month-filter-container">
-                <MonthFilter
-                selectedMonth={selectedMonth}
-                onMonthChange={setSelectedMonth}
-                themeColor="yellow"
-                />
+                <MonthFilter selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} themeColor="yellow" />
               </div>
 
-  <SortFilter
-  selected={sortOption}
-  onChange={setSortOption}
-  themeColor="yellow"
-/>
-
-
+              <SortFilter selected={sortOption} onChange={setSortOption} themeColor="yellow" />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Content Grid */}
+      {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         <main>
           {loading ? (
             <LoadingSpinner />
-          ) : filteredLinks.length > 0 ? (
+          ) : sortedAll.length > 0 ? (
             <>
               {Object.entries(groupedLinks)
-                .sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime())
+                .sort(([a], [b]) => {
+                  const da = new Date(a).getTime();
+                  const db = new Date(b).getTime();
+                  return sortOption === "oldest" ? da - db : db - da;
+                })
                 .map(([date, posts]) => (
                   <div key={date} className="mb-8">
                     <h2
@@ -317,50 +295,48 @@ const VIPBannedPage: React.FC = () => {
                       <div className="w-3 h-8 bg-gradient-to-b from-yellow-500 to-red-600 rounded-full shadow-lg shadow-yellow-500/30"></div>
                       <Crown className="w-5 h-5 text-yellow-400 animate-pulse" />
                       <AlertTriangle className="w-4 h-4 text-red-400" />
-                      <span className="bg-gradient-to-r from-yellow-400 to-red-400 bg-clip-text text-transparent">
-                        VIP Banned - {date}
-                      </span>
+                      <span className="bg-gradient-to-r from-yellow-400 to-red-400 bg-clip-text text-transparent">VIP Banned - {date}</span>
                       <Shield className="w-4 h-4 text-red-300" />
                     </h2>
+
                     <div className="space-y-2">
                       {posts
-                        .sort(
-                          (a, b) =>
-                            new Date(b.postDate || b.createdAt).getTime() -
-                            new Date(a.postDate || a.createdAt).getTime()
-                        )
+                        .sort((a, b) => {
+                          const da = new Date(a.postDate || a.createdAt).getTime();
+                          const db = new Date(b.postDate || b.createdAt).getTime();
+                          return sortOption === "oldest" ? da - db : db - da;
+                        })
                         .map((link, index) => (
-<motion.div
-  key={link.id}
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ delay: index * 0.05 }}
-  className={`group rounded-xl p-3 transition-all duration-300 cursor-pointer backdrop-blur-sm shadow-lg hover:shadow-xl transform hover:scale-[1.01] ${
-    isDark
-      ? "bg-gray-800/60 hover:bg-gray-700/80 border-yellow-500/30 hover:border-red-400/60 hover:shadow-red-500/20"
-      : "bg-white/60 hover:bg-gray-50/80 border-yellow-400/40 hover:border-red-400/60 hover:shadow-red-400/20"
-  } border`}
-  onClick={() => {
-    const contentType = link.contentType || 'vip-banned';
-    switch (contentType) {
-      case 'vip-asian':
-        navigate(`/vip-asian/${link.slug}`);
-        break;
-      case 'vip-western':
-        navigate(`/vip-western/${link.slug}`);
-        break;
-      case 'vip-banned':
-        navigate(`/vip-banned/${link.slug}`);
-        break;
-      case 'vip-unknown':
-        navigate(`/vip-unknown/${link.slug}`);
-        break;
-      default:
-        navigate(`/vip-banned/${link.slug}`);
-    }
-  }}
->
-
+                          <motion.div
+                            key={link.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className={`group rounded-xl p-3 transition-all duration-300 cursor-pointer backdrop-blur-sm shadow-lg hover:shadow-xl transform hover:scale-[1.01] ${
+                              isDark
+                                ? "bg-gray-800/60 hover:bg-gray-700/80 border-yellow-500/30 hover:border-red-400/60 hover:shadow-red-500/20"
+                                : "bg-white/60 hover:bg-gray-50/80 border-yellow-400/40 hover:border-red-400/60 hover:shadow-red-400/20"
+                            } border`}
+                            onClick={() => {
+                              const ct = link.contentType || "vip-banned";
+                              switch (ct) {
+                                case "vip-asian":
+                                  navigate(`/vip-asian/${link.slug}`);
+                                  break;
+                                case "vip-western":
+                                  navigate(`/vip-western/${link.slug}`);
+                                  break;
+                                case "vip-banned":
+                                  navigate(`/vip-banned/${link.slug}`);
+                                  break;
+                                case "vip-unknown":
+                                  navigate(`/vip-unknown/${link.slug}`);
+                                  break;
+                                default:
+                                  navigate(`/vip-banned/${link.slug}`);
+                              }
+                            }}
+                          >
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                               <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
                                 <Crown className="w-5 h-5 text-yellow-400 animate-pulse" />
@@ -374,8 +350,9 @@ const VIPBannedPage: React.FC = () => {
                                   <div className="absolute -bottom-1 left-0 w-16 h-0.5 bg-gradient-to-r from-yellow-500 to-red-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                 </h3>
                               </div>
+
                               <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                                {recentLinks.includes(link) && (
+                                {recentIds.has(link.id) && (
                                   <span
                                     className={`inline-flex items-center px-2 sm:px-4 py-1 sm:py-2 text-white text-xs font-bold rounded-full shadow-lg animate-pulse border font-roboto ${
                                       isDark
@@ -388,20 +365,22 @@ const VIPBannedPage: React.FC = () => {
                                   </span>
                                 )}
 
-                                {/* Content Type Badge for cross-section results */}
-                                {link.contentType && link.contentType !== 'vip-banned' && (
-                                  <span className={`inline-flex items-center px-3 py-1 text-xs font-bold rounded-full ${
-                                    link.contentType === 'vip-asian' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' :
-                                    link.contentType === 'vip-western' ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30' :
-                                    link.contentType === 'vip-unknown' ? 'bg-gray-500/20 text-gray-300 border border-gray-500/30' : ''
-                                  }`}>
-                                    {link.contentType.replace('vip-', '').toUpperCase()}
+                                {link.contentType && link.contentType !== "vip-banned" && (
+                                  <span
+                                    className={`inline-flex items-center px-3 py-1 text-xs font-bold rounded-full ${
+                                      link.contentType === "vip-asian"
+                                        ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                                        : link.contentType === "vip-western"
+                                        ? "bg-orange-500/20 text-orange-300 border border-orange-500/30"
+                                        : link.contentType === "vip-unknown"
+                                        ? "bg-gray-500/20 text-gray-300 border border-gray-500/30"
+                                        : ""
+                                    }`}
+                                  >
+                                    {link.contentType.replace("vip-", "").toUpperCase()}
                                   </span>
                                 )}
 
-
-
-                                {/* Category Badge */}
                                 <span
                                   className={`inline-flex items-center px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm font-medium rounded-full border backdrop-blur-sm font-roboto ${
                                     isDark
@@ -450,16 +429,10 @@ const VIPBannedPage: React.FC = () => {
                 <Crown className="w-16 h-16 text-yellow-500 animate-pulse" />
                 <AlertTriangle className="w-12 h-12 text-red-500" />
               </div>
-              <h3
-                className={`text-3xl font-bold mb-4 font-orbitron ${
-                  isDark ? "text-white" : "text-gray-900"
-                }`}
-              >
+              <h3 className={`text-3xl font-bold mb-4 font-orbitron ${isDark ? "text-white" : "text-gray-900"}`}>
                 No VIP Banned Content Found
               </h3>
-              <p className="text-gray-400 text-lg font-roboto">
-                Try adjusting your search or filters to find premium banned content.
-              </p>
+              <p className="text-gray-400 text-lg font-roboto">Try adjusting your search or filters to find premium banned content.</p>
             </div>
           )}
         </main>
