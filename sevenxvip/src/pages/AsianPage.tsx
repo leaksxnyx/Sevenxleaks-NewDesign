@@ -70,40 +70,16 @@ const AsianPage: React.FC = () => {
         sortBy: "postDate",
         sortOrder: "DESC",
         limit: "24",
+        contentType: "asian"
       });
 
-      if (searchName) {
-        params.append('search', searchName);
-      }
-      if (selectedCategory) {
-        params.append('category', selectedCategory);
-      }
+      if (searchName) params.append('search', searchName);
+      if (selectedCategory) params.append('category', selectedCategory);
+      if (selectedMonth) params.append('month', selectedMonth);
+      if (dateFilter !== 'all') params.append('dateFilter', dateFilter);
 
-       if (selectedMonth) {
-        params.append('month', selectedMonth);
-      }
-
-      if (dateFilter !== 'all') {
-        const today = new Date();
-        let targetDate = new Date();
-        
-        switch (dateFilter) {
-          case 'today':
-            break;
-          case 'yesterday':
-            targetDate.setDate(today.getDate() - 1);
-            break;
-          case '7days':
-            targetDate.setDate(today.getDate() - 7);
-            break;
-        }
-        
-        params.append('month', (targetDate.getMonth() + 1).toString().padStart(2, '0'));
-      }
-
-      const endpoint = searchName ? '/asiancontent/search' : '/asiancontent';
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}${endpoint}?${params}`,
+        `${import.meta.env.VITE_BACKEND_URL}/universal-search/search?${params}`,
         {
           headers: {
             "x-api-key": `${import.meta.env.VITE_FRONTEND_API_KEY}`,
@@ -162,7 +138,7 @@ const AsianPage: React.FC = () => {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchName, selectedCategory, dateFilter]);
+  }, [searchName, selectedCategory, dateFilter, selectedMonth]);
 
   const handleLoadMore = () => {
     if (loadingMore || currentPage >= totalPages) return;
@@ -200,7 +176,7 @@ const AsianPage: React.FC = () => {
   const groupedLinks = groupPostsByDate(filteredLinks);
 
   return (
-    <div className={`min-h-screen ${
+    <div className={`min-h-screen isolate ${
       isDark 
         ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white' 
         : 'bg-gradient-to-br from-gray-50 via-white to-gray-100 text-gray-900'
@@ -211,7 +187,7 @@ const AsianPage: React.FC = () => {
       </Helmet>
 
       {/* Filter Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative z-[60]">
         <div className={`backdrop-blur-xl border rounded-3xl p-6 shadow-2xl ${
           isDark 
             ? 'bg-gray-800/60 border-gray-700/50' 
@@ -270,13 +246,13 @@ const AsianPage: React.FC = () => {
               ))}
             </div>
 
-                <div className="flex items-center gap-2 z-[99px]">
-              <MonthFilter
-                selectedMonth={selectedMonth}
-                onMonthChange={setSelectedMonth}
-                themeColor="purple"
-              />
-            </div>
+<div className="flex items-center gap-2 month-filter-container relative z-50">
+  <MonthFilter
+    selectedMonth={selectedMonth}
+    onMonthChange={setSelectedMonth}
+    themeColor="purple"
+  />
+</div>
 
             {/* Category Select */}
             <div className="flex items-center gap-2">
@@ -325,7 +301,7 @@ const AsianPage: React.FC = () => {
       </div>
 
       {/* Content Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-0">
         <main>
           {loading ? (
             <LoadingSpinner />
@@ -397,7 +373,7 @@ const AsianPage: React.FC = () => {
                               }
                             }}
                           >
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 ">
                               <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
                                 {link.contentType && (
                                   <div

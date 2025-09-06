@@ -46,7 +46,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
       <motion.div
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        className="hidden sm:flex items-center gap-3 cursor-pointer px-4 py-3 rounded-2xl   transition-all duration-300 shadow-lg hover:shadow-xl"
+        className="hidden sm:flex relative left-5  items-center gap-5 cursor-pointer px-7 py-3 rounded-2xl   transition-all duration-300 shadow-lg hover:shadow-xl"
         onClick={handleAccountClick}
       >
         <div className="relative">
@@ -89,7 +89,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
 <AnimatePresence>
   {isMenuOpen && (
     <motion.div
-      className={`absolute left-0 mt-2 w-56 rounded-xl shadow-xl border overflow-hidden 
+      className={`absolute left-5  mt-2 w-56 rounded-xl shadow-xl border overflow-hidden 
         ${isDark 
           ? "bg-gray-900/95 border-gray-700/50" 
           : "bg-white border-gray-200"}`

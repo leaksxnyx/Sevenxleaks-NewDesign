@@ -57,7 +57,7 @@ router.get('/status', Authmiddleware, async (req, res) => {
         const user = await User.findByPk(userId);
 
         if (!user) {
-            return res.status(404).json({ error: 'Usuário não encontrado!' });
+            return res.status(404).json({ error: 'User not found!' });
         }
 
         const status = {
@@ -125,7 +125,7 @@ router.get('/is-admin/:email', async (req, res) => {
       const user = await User.findOne({ where: { email } });
   
       if (!user) {
-        return res.status(404).json({ error: 'Usuário não encontrado!' });
+        return res.status(404).json({ error: 'User not found!' });
       }
   
       res.status(200).json({ isAdmin: user.isAdmin });
@@ -143,13 +143,13 @@ router.get('/is-vip/:email', async (req, res) => {
         const user = await User.findOne({ where: { email } });
 
         if (!user) {
-            return res.status(404).json({ error: 'Usuário não encontrado!' });
+            return res.status(404).json({ error: 'User not found!' });
         }
 
         res.status(200).json({ isVip: user.isVip });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: 'Erro ao verificar status VIP' });
+        res.status(500).json({ error: 'Error checking VIP status' });
     }
 });
 
@@ -162,7 +162,7 @@ router.post('/register', async (req, res) => {
         const existingemail = await User.findOne({ where: { email } });
 
         if (existingemail) {
-            return res.status(409).json({ error: 'Email já cadastrado!' });
+            return res.status(409).json({ error: 'Email already registered!' });
         }
 
         const createnewuser = await User.create({

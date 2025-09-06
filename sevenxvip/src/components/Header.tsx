@@ -211,7 +211,8 @@ const Header: React.FC = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-slate-500 to-slate-600 opacity-0 group-hover:opacity-10 rounded-lg transition-opacity duration-300"></div>
             </a>
 
-            <Link 
+<div >
+              <Link 
               to="/login" 
               className={`relative px-4 py-2 transition-all duration-300 group rounded-lg backdrop-blur-sm border border-transparent ${themeClasses.border} ${themeClasses.glow} ${
                 isDark 
@@ -222,6 +223,19 @@ const Header: React.FC = () => {
               <span className="relative z-10 font-medium font-roboto text-sm">Login</span>
               <div className={`absolute inset-0 ${themeClasses.gradient} opacity-0 group-hover:opacity-10 rounded-xl transition-opacity duration-300`}></div>
             </Link>
+
+                        <Link 
+              to="/register" 
+              className={`relative px-4 py-2 transition-all duration-300 group rounded-lg backdrop-blur-sm border border-transparent ${themeClasses.border} ${themeClasses.glow} ${
+                isDark 
+                  ? 'text-gray-300 hover:text-white hover:bg-gray-800/50' 
+                  : 'text-gray-800 hover:text-black hover:bg-gray-100/50'
+              }`}
+            >
+              <span className="relative z-10 font-medium font-roboto text-sm">Register</span>
+              <div className={`absolute inset-0 ${themeClasses.gradient} opacity-0 group-hover:opacity-10 rounded-xl transition-opacity duration-300`}></div>
+            </Link>
+</div>
           </nav>
 
           {/* Actions Section */}
