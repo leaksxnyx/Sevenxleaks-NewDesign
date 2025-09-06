@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { HelpCircle, Filter } from "lucide-react";
+import { HelpCircle, Filter, Eye } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useRegion } from "../contexts/RegionContext";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
 import LoadingUnknown from "../components/Loaders/LoadingUnknown";
 import MonthFilter from "../components/MonthFilter";
+import SortFilter, { SortValue } from "../components/SortFilter";
 
 type LinkItem = {
   id: string;
@@ -30,7 +31,7 @@ const UnknownContent: React.FC = () => {
   const [filteredLinks, setFilteredLinks] = useState<LinkItem[]>([]);
   const [searchName, setSearchName] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState<string>("");
-  const [sortOption, setSortOption] = useState<string>("mostRecent");
+  const [sortOption, setSortOption] = useState<SortValue>("mostRecent");
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -160,6 +161,60 @@ const UnknownContent: React.FC = () => {
       </Helmet>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {/* Unknown Header */}
+<motion.div
+  initial={{ opacity: 0, y: -30 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.8 }}
+  className="text-center mb-12"
+>
+  <motion.div
+    className="inline-flex items-center gap-4 mb-6"
+    initial={{ opacity: 0, scale: 0.9 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ duration: 0.8, delay: 0.2 }}
+  >
+    {/* Ícone HelpCircle animado */}
+    <motion.div
+      animate={{
+        rotate: [0, 10, -10, 0],
+        y: [0, -4, 0, 4, 0],
+        scale: [1, 1.05, 1],
+      }}
+      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+    >
+      <HelpCircle className="w-12 h-12 text-slate-500" />
+    </motion.div>
+
+    <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-500 via-slate-600 to-slate-700 2xl:text-3xl">
+      Unknown Content
+    </h1>
+
+    {/* Ícone Eye animado */}
+    <motion.div
+      animate={{
+        rotate: [0, -10, 10, 0],
+        y: [0, 4, 0, -4, 0],
+        scale: [1, 1.05, 1],
+      }}
+      transition={{ duration: 3, repeat: Infinity, delay: 1, ease: "easeInOut" }}
+    >
+      <Eye className="w-12 h-12 text-slate-500" />
+    </motion.div>
+  </motion.div>
+
+  <motion.p
+    className="text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed"
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.8, delay: 0.4 }}
+  >
+    Unknown abg/asian models
+  </motion.p>
+</motion.div>
+
+
         {/* Header Section */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative z-[60]">
           <div
@@ -213,36 +268,18 @@ const UnknownContent: React.FC = () => {
                   />
                 </div>
 
-                <select
-                  value={sortOption}
-                  onChange={(e) => setSortOption(e.target.value)}
-                  className={`px-3 py-1.5 border rounded-lg text-xs focus:outline-none focus:ring-1 transition-all duration-300 min-w-[120px] ${
-                    isDark
-                      ? "bg-slate-700/50 border-slate-600/50 text-gray-300 focus:ring-slate-500/50 hover:bg-slate-600/50"
-                      : "bg-gray-200/50 border-gray-300/50 text-gray-700 focus:ring-slate-600/50 hover:bg-gray-300/50"
-                  }`}
-                >
-                  <option value="mostRecent">Most Recent</option>
-                  <option value="oldest">Oldest</option>
-                </select>
-
-                <button
-                  className={`p-2 rounded-lg transition-all duration-300 border ${
-                    isDark
-                      ? "bg-slate-700/50 hover:bg-slate-500/20 text-gray-300 hover:text-slate-300 border-slate-600/50"
-                      : "bg-gray-200/50 hover:bg-slate-100 text-gray-700 hover:text-slate-700 border-gray-300/50"
-                  }`}
-                  title="Additional Filters"
-                >
-                  <Filter className="w-5 h-5" />
-                </button>
+<SortFilter
+  selected={sortOption}
+  onChange={setSortOption}
+  themeColor="red"
+/>
               </div>
             </div>
           </div>
         </div>
 
         {/* Content Grid */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-0">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-0">
           <main>
             {loading ? (
               <LoadingUnknown />

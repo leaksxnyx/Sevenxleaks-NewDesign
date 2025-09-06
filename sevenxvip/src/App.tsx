@@ -22,7 +22,6 @@ import AsianContentDetails from "./components/AsianContentDetails";
 import AdminPainel from "./pages/AdminPainel";
 import AdminVipUsers from "./pages/AdminVipUsers";
 import SupportPage from "./pages/SupportPage";
-import RecommendContent from "./pages/RecommendContent";
 import ViewStats from "./pages/Viewstats";
 import ViewRequests from "./pages/ViewRequests";
 import AccessDenied from "./pages/AccessDenied";
@@ -231,7 +230,6 @@ const App = () => {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/support" element={<SupportPage />} />
-            <Route path="/recommend" element={<RecommendContent />} />
           </Routes>
         </main>
 

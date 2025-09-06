@@ -7,6 +7,7 @@ import { Crown, Calendar, Plus, Star, Sparkles } from "lucide-react";
 import VIPHeader from "../components/VIP/VIPHeader";
 import { useTheme } from "../contexts/ThemeContext";
 import MonthFilter from "../components/MonthFilter";
+import CategoryFilter from "../components/CategoryFilter";
 
 type LinkItem = {
   id: string;
@@ -257,34 +258,20 @@ const VIPWesternPage: React.FC = () => {
             </div>
 
             {/* Category Select */}
-            <div className="flex items-center gap-2">
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className={`px-3 py-1.5 border rounded-lg text-xs focus:outline-none focus:ring-1 transition-all duration-300 min-w-[120px] ${
-                  isDark 
-                    ? 'bg-gray-700/50 border-yellow-500/30 text-gray-300 focus:ring-yellow-500/50 hover:bg-gray-600/50'
-                    : 'bg-gray-200/50 border-yellow-400/40 text-gray-700 focus:ring-yellow-600/50 hover:bg-gray-300/50'
-                }`}
-              >
-                <option value="">All Categories</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.category}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
+<div className="flex items-center gap-2">
+  <CategoryFilter
+    selected={selectedCategory}
+    onChange={setSelectedCategory}
+    themeColor="yellow"
+    options={[
+      { value: "", label: "All Categories" },
+      ...categories.map((c) => ({
+        value: c.category,
+        label: c.name,
+      })),
+    ]}
+  />
 
-              <button 
-                className={`p-2 rounded-lg transition-all duration-300 border ${
-                  isDark 
-                    ? 'bg-gray-700/50 hover:bg-yellow-500/20 text-gray-300 hover:text-yellow-300 border-yellow-500/30'
-                    : 'bg-gray-200/50 hover:bg-yellow-100 text-gray-700 hover:text-yellow-700 border-yellow-400/40'
-                }`}
-                title="Calendar View"
-              >
-                <Calendar className="w-5 h-5" />
-              </button>
               
               <button 
                 className={`p-2 rounded-lg transition-all duration-300 border ${

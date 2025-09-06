@@ -228,7 +228,7 @@ const VIPAsianContentDetails = () => {
                     ? 'bg-gray-700/50 border-gray-600/50'
                     : 'bg-gray-200/50 border-gray-300/50'
                 }`}>
-                  <Calendar className="w-4 h-4 text-yellow-400" />
+                  
                   <span className={`text-sm ${
                     isDark ? 'text-gray-300' : 'text-gray-700'
                   }`}>{formatDate(content.postDate)}</span>

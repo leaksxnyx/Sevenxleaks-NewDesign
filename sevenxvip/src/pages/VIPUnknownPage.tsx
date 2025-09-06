@@ -3,10 +3,10 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
-import { Crown, Calendar, Plus, Star, Sparkles, HelpCircle } from "lucide-react";
-import VIPHeader from "../components/VIP/VIPHeader";
+import { Crown, Calendar, Plus, Star, Sparkles, HelpCircle, Eye } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import MonthFilter from "../components/MonthFilter";
+import SortFilter, { SortValue } from "../components/SortFilter";
 
 type LinkItem = {
   id: string;
@@ -55,7 +55,9 @@ const VIPUnknownPage: React.FC = () => {
   const [hasMoreContent, setHasMoreContent] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
-    const [selectedMonth, setSelectedMonth] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [sortOption, setSortOption] = useState<SortValue>("mostRecent");
+    
   
 
   function decodeModifiedBase64<T>(encodedStr: string): T {
@@ -181,7 +183,7 @@ const VIPUnknownPage: React.FC = () => {
 
   return (
     <div
-      className={`min-h-screen ${
+      className={`min-h-screen isolate ${
         isDark
           ? "bg-gradient-to-br from-gray-900 via-yellow-900/10 to-gray-900 text-white"
           : "bg-gradient-to-br from-gray-50 via-yellow-100/20 to-gray-100 text-gray-900"
@@ -192,7 +194,59 @@ const VIPUnknownPage: React.FC = () => {
         <link rel="canonical" href="https://sevenxleaks.com/vip-unknown" />
       </Helmet>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative z-[60]">
+
+        <motion.div
+  initial={{ opacity: 0, y: -30 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.8 }}
+  className="text-center mb-12"
+>
+  <motion.div
+    className="inline-flex items-center gap-4 mb-6"
+    initial={{ opacity: 0, scale: 0.9 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ duration: 0.8, delay: 0.2 }}
+  >
+    {/* Ícone HelpCircle animado */}
+    <motion.div
+      animate={{
+        rotate: [0, 10, -10, 0],
+        y: [0, -4, 0, 4, 0],
+        scale: [1, 1.05, 1],
+      }}
+      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+    >
+      <HelpCircle className="w-12 h-12 text-yellow-500" />
+    </motion.div>
+
+    <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700 2xl:text-3xl">
+      Unknown Content
+    </h1>
+
+    {/* Ícone Eye animado */}
+    <motion.div
+      animate={{
+        rotate: [0, -10, 10, 0],
+        y: [0, 4, 0, -4, 0],
+        scale: [1, 1.05, 1],
+      }}
+      transition={{ duration: 3, repeat: Infinity, delay: 1, ease: "easeInOut" }}
+    >
+      <Eye className="w-12 h-12 text-yellow-500" />
+    </motion.div>
+  </motion.div>
+
+  <motion.p
+    className="text-lg text-yellow-600 max-w-3xl mx-auto leading-relaxed"
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.8, delay: 0.4 }}
+  >
+    Unknown abg/asian models
+  </motion.p>
+</motion.div>
+
         <div
           className={`backdrop-blur-xl border rounded-3xl p-6 shadow-2xl ${
             isDark
@@ -228,52 +282,11 @@ const VIPUnknownPage: React.FC = () => {
                 ></div>
               )}
             </div>
-
-            {/* Filter Controls */}
-            <div className="flex items-center gap-2">
-              {["all", "today", "yesterday", "7days"].map((filter) => (
-                <button
-                  key={filter}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-300 border whitespace-nowrap ${
-                    dateFilter === filter
-                      ? isDark
-                        ? "bg-yellow-500 text-black border-yellow-400 shadow-lg shadow-yellow-500/30"
-                        : "bg-yellow-600 text-white border-yellow-500 shadow-lg shadow-yellow-500/20"
-                      : isDark
-                        ? "bg-gray-700/50 text-gray-300 hover:bg-yellow-500/20 border-gray-600/50 hover:text-yellow-300"
-                        : "bg-gray-200/50 text-gray-700 hover:bg-yellow-100 border-gray-300/50 hover:text-yellow-700"
-                  }`}
-                  onClick={() => setDateFilter(filter)}
-                >
-                  {filter === "all"
-                    ? "All"
-                    : filter === "7days"
-                    ? "7 Days"
-                    : filter.charAt(0).toUpperCase() + filter.slice(1)}
-                </button>
-              ))}
-              
-
-            </div>
+           
 
             {/* Category and Region Select */}
             <div className="flex items-center gap-2">
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className={`px-3 py-1.5 border rounded-lg text-xs focus:outline-none focus:ring-1 transition-all duration-300 min-w-[120px] ${
-                  isDark
-                    ? "bg-gray-700/50 border-yellow-500/30 text-gray-300 focus:ring-yellow-500/50 hover:bg-gray-600/50"
-                    : "bg-gray-200/50 border-yellow-400/40 text-gray-700 focus:ring-yellow-600/50 hover:bg-gray-300/50"
-                }`}
-              >
-                <option value="">All Categories</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.category}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
+
 
               <MonthFilter
                 selectedMonth={selectedMonth}
@@ -281,24 +294,21 @@ const VIPUnknownPage: React.FC = () => {
                 themeColor="yellow"
               />
 
+                            <SortFilter
+  selected={sortOption}
+  onChange={setSortOption}
+  themeColor="yellow"
+/>
 
-              <button 
-                className={`p-2 rounded-lg transition-all duration-300 border ${
-                  isDark 
-                    ? "bg-gray-700/50 hover:bg-yellow-500/20 text-gray-300 hover:text-yellow-300 border-yellow-500/30"
-                    : "bg-gray-200/50 hover:bg-yellow-100 text-gray-700 hover:text-yellow-700 border-yellow-400/40"
-                }`}
-                title="Calendar View"
-              >
-                <Calendar className="w-5 h-5" />
-              </button>
+
+
             </div>
           </div>
         </div>
       </div>
 
       {/* Content Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-0">
         <main>
           {loading ? (
             <LoadingSpinner />

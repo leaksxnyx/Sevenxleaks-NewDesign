@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
 import { useTheme } from "../contexts/ThemeContext";
 import MonthFilter from "../components/MonthFilter";
+import CategoryFilter from "../components/CategoryFilter";
 
 type LinkItem = {
   id: string;
@@ -255,35 +256,20 @@ const AsianPage: React.FC = () => {
 </div>
 
             {/* Category Select */}
-            <div className="flex items-center gap-2">
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className={`px-3 py-1.5 border rounded-lg text-xs focus:outline-none focus:ring-1 transition-all duration-300 min-w-[120px] ${
-                  isDark 
-                    ? 'bg-gray-700/50 border-gray-600/50 text-gray-300 focus:ring-purple-500/50 hover:bg-gray-600/50'
-                    : 'bg-gray-200/50 border-gray-300/50 text-gray-700 focus:ring-purple-600/50 hover:bg-gray-300/50'
-                }`}
-              >
-                <option value="">All Categories</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.category}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
+<div className="flex items-center gap-2">
+  <CategoryFilter
+    selected={selectedCategory}
+    onChange={setSelectedCategory}
+    themeColor="purple"
+    options={[
+      { value: "", label: "All Categories" },
+      ...categories.map((c) => ({
+        value: c.category,
+        label: c.name,
+      })),
+    ]}
+  />
 
-              {/* Action Buttons */}
-              <button 
-                className={`p-2 rounded-lg transition-all duration-300 border ${
-                  isDark 
-                    ? 'bg-gray-700/50 hover:bg-purple-500/20 text-gray-300 hover:text-purple-300 border-gray-600/50'
-                    : 'bg-gray-200/50 hover:bg-purple-100 text-gray-700 hover:text-purple-700 border-gray-300/50'
-                }`}
-                title="Calendar View"
-              >
-                <i className="fa-regular fa-calendar text-sm"></i>
-              </button>
               <button 
                 className={`p-2 rounded-lg transition-all duration-300 border ${
                   isDark 

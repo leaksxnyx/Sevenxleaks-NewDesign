@@ -237,38 +237,7 @@ const VIPUserMenu: React.FC<VIPUserMenuProps> = ({
                   VIP EXCLUSIVE
                 </div>
                 <div className="space-y-1">
-                  {/* Recommend Content */}
-                  <Link
-                    to="/recommend"
-                    className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group
-                    ${
-                      isDark
-                        ? "hover:bg-yellow-500/10 text-yellow-200"
-                        : "border hover:bg-yellow-100 hover:border-yellow-300 text-gray-800"
-                    }`}
-                    onClick={handleMenuToggle}
-                  >
-                    <div
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200
-                      ${
-                        isDark
-                          ? "bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 border border-transparent"
-                          : "bg-gradient-to-br from-yellow-200 to-yellow-300 border border-yellow-300"
-                      }`}
-                    >
-                      <i className="fa-solid fa-plus text-yellow-400 text-sm"></i>
-                    </div>
-                    <div className="flex-1">
-                      <span className="text-sm font-bold">Recommend Content</span>
-                      <p
-                        className={`text-xs ${
-                          isDark ? "text-yellow-400" : "text-gray-500"
-                        }`}
-                      >
-                        Suggest premium content
-                      </p>
-                    </div>
-                  </Link>
+                
 
                   {/* VIP Asian */}
                   <Link

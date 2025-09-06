@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
 import LoadingBanned from "../components/Loaders/LoadingBanned";
 import MonthFilter from "../components/MonthFilter";
+import SortFilter, { SortValue } from "../components/SortFilter";
 
 type LinkItem = {
   id: string;
@@ -30,7 +31,7 @@ const BannedContent: React.FC = () => {
   const [filteredLinks, setFilteredLinks] = useState<LinkItem[]>([]);
   const [searchName, setSearchName] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState<string>("");
-  const [sortOption, setSortOption] = useState<string>("mostRecent");
+  const [sortOption, setSortOption] = useState<SortValue>("mostRecent");
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -243,29 +244,13 @@ const BannedContent: React.FC = () => {
                   />
                 </div>
 
-                <select
-                  value={sortOption}
-                  onChange={(e) => setSortOption(e.target.value)}
-                  className={`px-3 py-1.5 border rounded-lg text-xs focus:outline-none focus:ring-1 transition-all duration-300 min-w-[120px] ${
-                    isDark 
-                      ? 'bg-gray-700/50 border-gray-600/50 text-gray-300 focus:ring-red-500/50 hover:bg-gray-600/50'
-                      : 'bg-gray-200/50 border-gray-300/50 text-gray-700 focus:ring-red-600/50 hover:bg-gray-300/50'
-                  }`}
-                >
-                  <option value="mostRecent">Most Recent</option>
-                  <option value="oldest">Oldest</option>
-                </select>
+<SortFilter
+  selected={sortOption}
+  onChange={setSortOption}
+  themeColor="red"
+/>
 
-                <button 
-                  className={`p-2 rounded-lg transition-all duration-300 border ${
-                    isDark 
-                      ? 'bg-gray-700/50 hover:bg-red-500/20 text-gray-300 hover:text-red-300 border-gray-600/50'
-                      : 'bg-gray-200/50 hover:bg-red-100 text-gray-700 hover:text-red-700 border-gray-300/50'
-                  }`}
-                  title="Additional Filters"
-                >
-                  <Filter className="w-5 h-5" />
-                </button>
+
               </div>
             </div>
           </div>

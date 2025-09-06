@@ -125,7 +125,6 @@ const HeaderLogged: React.FC = () => {
     const vipItems: MenuItem[] = isVip
       ? [
           { name: "VIP Content", path: "/vip", icon: "fa-solid fa-crown" },
-          { name: "Recommend", path: "/recommend", icon: "fa-regular fa-lightbulb" },
         ]
       : [{ name: "Plans", path: "/plans", icon: "fa-solid fa-crown" }];
 

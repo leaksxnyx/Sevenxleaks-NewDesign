@@ -65,7 +65,6 @@ const VIPHeader: React.FC = () => {
       { name: "VIP Western", path: "/vip-western", icon: "fa-solid fa-crown" },
       { name: "VIP Banned", path: "/vip-banned", icon: "fa-solid fa-ban" },
       { name: "VIP Unknown", path: "/vip-unknown", icon: "fa-regular fa-circle-question" },
-      { name: "Recommend", path: "/recommend", icon: "fa-regular fa-lightbulb" },
     ];
 
     const adminItems: MenuItem[] = isAdmin

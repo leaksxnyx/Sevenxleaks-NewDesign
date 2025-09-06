@@ -186,20 +186,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
                     VIP FEATURES
                   </div>
                   <div className="space-y-1">
-                    <Link
-                      to="/recommend"
-                      className="flex items-center gap-3 px-3 py-3 hover:bg-gray-800/60 rounded-xl transition-all duration-200 group border border-transparent hover:border-yellow-500/20 hover:shadow-lg hover:shadow-yellow-500/10"
-                      onClick={handleMenuToggle}
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 flex items-center justify-center group-hover:from-yellow-500/30 group-hover:to-yellow-600/30 transition-all duration-200 border border-yellow-500/20">
-                        <i className="fa-solid fa-plus text-yellow-400 text-sm"></i>
-                      </div>
-                      <div className="flex-1">
-                        <span className="text-sm font-bold text-gray-200 group-hover:text-white font-['Orbitron']">Recommend Content</span>
-                        <p className="text-xs text-gray-400 font-['Roboto']">Suggest new content ideas</p>
-                      </div>
-                      <i className="fa-solid fa-chevron-right text-gray-500 text-sm group-hover:text-gray-400 transition-all duration-200 group-hover:translate-x-1"></i>
-                    </Link>
+                   
                     <Link
                       to="/vip"
                       className="flex items-center gap-3 px-3 py-3 hover:bg-gray-800/60 rounded-xl transition-all duration-200 group border border-transparent hover:border-yellow-500/20 hover:shadow-lg hover:shadow-yellow-500/10"
