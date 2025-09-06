@@ -76,7 +76,6 @@ const VIPUnknownPage: React.FC = () => {
         sortBy: "postDate",
         sortOrder,
         limit: "24",
-        contentType: "vip-unknown",
       });
 
       if (searchName) params.append("search", searchName);
@@ -101,7 +100,12 @@ const VIPUnknownPage: React.FC = () => {
         response.data.data
       );
 
-      const { data: rawData, totalPages } = decoded;
+      const { data: allData, totalPages } = decoded;
+      
+      // Filter VIP unknown content from all VIP sources
+      const rawData = allData.filter(item => 
+        item.contentType && item.contentType.startsWith('vip') && item.category === "Unknown"
+      );
 
       if (isLoadMore) {
         setLinks((prev) => [...prev, ...rawData]);
@@ -141,17 +145,6 @@ const VIPUnknownPage: React.FC = () => {
       setCurrentPage(1);
       fetchContent(1);
     }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchName, selectedCategory, selectedRegion, selectedMonth, dateFilter, sortOption]);
-
-  const handleLoadMore = () => {
-    if (loadingMore || currentPage >= totalPages) return;
-    setLoadingMore(true);
-    const nextPage = currentPage + 1;
-    setCurrentPage(nextPage);
-    fetchContent(nextPage, true);
-  };
 
   const recentLinks = filteredLinks.slice(0, 5);
 

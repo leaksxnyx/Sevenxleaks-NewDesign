@@ -59,8 +59,6 @@ const renewVipRouter = require('./routes/Renewvip');
 const cancelsubscriptionRouter = require('./routes/Cancelsubscription')
 const filterOptionsRoutes = require('./routes/FilterOptions');
 const stripeCustomerPortalRouter = require('./routes/stripeCustomerPortal');
-const bannedContentRouter = require('./routes/BannedContent');
-const unknownContentRouter = require('./routes/UnknownContent');
 const rateLimit = require('express-rate-limit');
 const checkApiKey = require('./Middleware/CheckapiKey');
 const WesternRouter = require('./routes/WesternContent')
@@ -96,8 +94,6 @@ app.use('/stripe-portal', stripeCustomerPortalRouter);
 
 app.use('/westerncontent', checkApiKey, WesternRouter);
 app.use('/asiancontent', checkApiKey, AsianRouter);
-app.use('/bannedcontent', checkApiKey, bannedContentRouter);
-app.use('/unknowncontent', checkApiKey, unknownContentRouter);
 app.use('/vip-asiancontent', checkApiKey, VipAsianRouter);
 app.use('/vip-westerncontent', checkApiKey, VipWesternRouter);
 app.use('/vip-bannedcontent', checkApiKey, VipBannedRouter);

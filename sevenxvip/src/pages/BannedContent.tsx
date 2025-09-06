@@ -1,10 +1,9 @@
 // BannedContent.tsx
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { AlertTriangle, Shield } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
-import { useRegion } from "../contexts/RegionContext";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
 import LoadingBanned from "../components/Loaders/LoadingBanned";
@@ -40,7 +39,6 @@ const BannedContent: React.FC = () => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
   const { theme } = useTheme();
-  const isDark = theme === "dark";
   const { region } = useRegion();
 
   function decodeModifiedBase64<T>(encodedStr: string): T {
@@ -59,12 +57,10 @@ const BannedContent: React.FC = () => {
         sortBy: "postDate",
         sortOrder: sortOption === "oldest" ? "ASC" : "DESC",
         limit: "24",
-        contentType: "banned",
       });
 
       if (searchName) params.append("search", searchName);
       if (selectedMonth) params.append("month", selectedMonth);
-      // NÃO enviar dateFilter redundante. O backend usa sortBy/sortOrder.
 
       const response = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/universal-search/search?${params}`,
@@ -81,7 +77,10 @@ const BannedContent: React.FC = () => {
         response.data.data
       );
 
-      const { data: rawData, totalPages } = decoded;
+      const { data: allData, totalPages } = decoded;
+      
+      // Filter only banned content from all sources
+      const rawData = allData.filter(item => item.category === "Banned");
 
       if (isLoadMore) {
         setLinks((prev) => [...prev, ...rawData]);
@@ -109,7 +108,7 @@ const BannedContent: React.FC = () => {
     }, 300);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchName, selectedMonth, sortOption, region]);
+  }, [searchName, selectedMonth, sortOption]);
 
   const handleLoadMore = () => {
     if (loadingMore || currentPage >= totalPages) return;
@@ -119,18 +118,7 @@ const BannedContent: React.FC = () => {
     fetchContent(nextPage, true);
   };
 
-  // Ordenação centralizada para coerência com a UI
-  const sortedAll = useMemo(() => {
-    const arr = [...filteredLinks];
-    return arr.sort((a, b) => {
-      const da = new Date(a.postDate || a.createdAt).getTime();
-      const db = new Date(b.postDate || b.createdAt).getTime();
-      return sortOption === "oldest" ? da - db : db - da;
-    });
-  }, [filteredLinks, sortOption]);
-
-  // “NEW” com base na lista já ordenada
-  const recentIds = useMemo(() => {
+  const recentLinks = filteredLinks.slice(0, 5);
     return new Set(sortedAll.slice(0, 5).map((l) => l.id));
   }, [sortedAll]);
 
@@ -153,7 +141,7 @@ const BannedContent: React.FC = () => {
     return grouped;
   };
 
-  const groupedLinks = useMemo(() => groupPostsByDate(sortedAll), [sortedAll]);
+  const groupedLinks = groupPostsByDate(filteredLinks);
 
   return (
     <div
@@ -253,7 +241,7 @@ const BannedContent: React.FC = () => {
           <main>
             {loading ? (
               <LoadingBanned />
-            ) : sortedAll.length > 0 ? (
+            ) : filteredLinks.length > 0 ? (
               <>
                 {Object.entries(groupedLinks)
                   .sort(([dateA], [dateB]) => {
@@ -312,7 +300,7 @@ const BannedContent: React.FC = () => {
                             >
                               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                 <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
-                                  {link.contentType && link.contentType !== "banned" && (
+                                  {link.contentType && (
                                     <div
                                       className={`w-2 h-2 rounded-full ${
                                         link.contentType === "asian"
@@ -344,7 +332,7 @@ const BannedContent: React.FC = () => {
                                 </div>
 
                                 <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                                  {recentIds.has(link.id) && (
+                                  {recentLinks.includes(link) && (
                                     <span
                                       className={`inline-flex items-center px-2 sm:px-4 py-1 sm:py-2 text-white text-xs font-bold rounded-full shadow-lg animate-pulse border font-roboto ${
                                         isDark
@@ -356,7 +344,7 @@ const BannedContent: React.FC = () => {
                                       NEW
                                     </span>
                                   )}
-                                  {link.contentType && link.contentType !== "banned" && (
+                                  {link.contentType && (
                                     <span
                                       className={`inline-flex items-center px-3 py-1 text-xs font-bold rounded-full ${
                                         link.contentType === "asian"
@@ -367,6 +355,8 @@ const BannedContent: React.FC = () => {
                                           ? "bg-gray-500/20 text-gray-300 border border-gray-500/30"
                                           : link.contentType === "vip"
                                           ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
+                                          : link.contentType === "banned"
+                                          ? "bg-red-500/20 text-red-300 border border-red-500/30"
                                           : ""
                                       }`}
                                     >
