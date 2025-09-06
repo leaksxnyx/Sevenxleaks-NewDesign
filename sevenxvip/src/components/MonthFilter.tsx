@@ -134,8 +134,8 @@ const MonthFilter: React.FC<MonthFilterProps> = ({
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
                     selectedMonth === month.value
                       ? isDark
-                        ? 'bg-yellow-500/20 text-yellow-300'
-                        : 'bg-yellow-100 text-yellow-700'
+                        ? themeClasses.item
+                        : themeClasses.item
                       : themeClasses.item
                   }`}
                 >

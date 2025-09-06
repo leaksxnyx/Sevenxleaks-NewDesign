@@ -147,7 +147,7 @@ const BannedContent: React.FC = () => {
   const groupedLinks = groupPostsByDate(filteredLinks);
 
   return (
-    <div className={`min-h-screen ${
+    <div className={`min-h-screen isolate ${
       isDark 
         ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white' 
         : 'bg-gradient-to-br from-gray-50 via-white to-gray-100 text-gray-900'
@@ -157,7 +157,7 @@ const BannedContent: React.FC = () => {
         <link rel="canonical" href="https://sevenxleaks.com/banned" />
       </Helmet>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative z-[60]">
         {/* Header Section */}
         <motion.div 
           initial={{ opacity: 0, y: -30 }}
@@ -199,7 +199,7 @@ const BannedContent: React.FC = () => {
         </motion.div>
 
         {/* Filter Bar */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative z-[60]">
           <div className={`backdrop-blur-xl border rounded-3xl p-6 shadow-2xl ${
             isDark 
               ? 'bg-gray-800/60 border-gray-700/50' 
@@ -235,7 +235,7 @@ const BannedContent: React.FC = () => {
 
               {/* Filter Controls */}
               <div className="flex items-center gap-2">
-                <div className="month-filter-container">
+                <div className="month-filter-container relative z-50">
                   <MonthFilter
                   selectedMonth={selectedMonth}
                   onMonthChange={setSelectedMonth}
@@ -272,7 +272,7 @@ const BannedContent: React.FC = () => {
         </div>
 
         {/* Content Grid */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-10">
           <main>
             {loading ? (
               <LoadingBanned />
